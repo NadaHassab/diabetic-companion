@@ -256,6 +256,7 @@ class _EntryTile extends StatelessWidget {
                     .toList(),
               ),
             ],
+            ..._mealSection(context, sheetContext),
             if (entry.note.isNotEmpty) ...[
               const SizedBox(height: 12),
               Text('\u201c${entry.note}\u201d',
@@ -308,6 +309,53 @@ class _EntryTile extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  List<Widget> _mealSection(BuildContext context, BuildContext sheetContext) {
+    final appState = context.read<AppState>();
+    final meal = appState.mealLogForEntry(entry.id);
+    if (meal == null) return const [];
+    final focusMode = appState.profile.focusMode;
+    final theme = Theme.of(sheetContext);
+    return [
+      const SizedBox(height: 12),
+      Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: .5),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.restaurant_outlined,
+                    size: 16, color: theme.colorScheme.primary),
+                const SizedBox(width: 6),
+                Text(focusMode
+                    ? 'Meal logged'
+                    : 'Meal — ${meal.totalCarbs.toStringAsFixed(0)} g carbs',
+                    style: theme.textTheme.titleSmall
+                        ?.copyWith(fontWeight: FontWeight.w700)),
+              ],
+            ),
+            const SizedBox(height: 6),
+            for (final item in meal.items)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 2),
+                child: Text(
+                  focusMode
+                      ? '${item.foodName} (${item.portionLabel})'
+                      : '${item.foodName} (${item.portionLabel}) · ${item.carbGrams.toStringAsFixed(0)} g',
+                  style: theme.textTheme.bodySmall,
+                ),
+              ),
+          ],
+        ),
+      ),
+    ];
   }
 }
 

@@ -9,6 +9,8 @@ import '../../services/safety_service.dart';
 import '../../state/app_state.dart';
 import '../../theme.dart';
 import '../../utils/time_format.dart';
+import '../analytics/analytics_screen.dart';
+import '../ramadan/ramadan_screen.dart';
 import '../review/weekly_review_screen.dart';
 import '../safety/protocol_screen.dart';
 import '../widgets/common.dart';
@@ -195,6 +197,12 @@ class DashboardScreen extends StatelessWidget {
             const SizedBox(height: 12),
             _buildReviewTeaser(context, theme),
           ],
+          const SizedBox(height: 12),
+          _VeggieFirstNudge(),
+          const SizedBox(height: 12),
+          _AnalyticsTeaser(onQuickAdd: onQuickAdd),
+          const SizedBox(height: 12),
+          _RamadanTeaser(),
         ],
       ],
     );
@@ -262,6 +270,7 @@ class DashboardScreen extends StatelessWidget {
     final learning = CompassionService.learningMoment(
       entry: latest,
       targets: state.targets,
+      recentEntries: state.entries.take(10).toList(),
     );
     if (learning != null) {
       return _feedbackCard(theme, learning);
@@ -362,6 +371,175 @@ class DashboardScreen extends StatelessWidget {
           ),
         ),
       );
+}
+
+class _VeggieFirstNudge extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final hour = DateTime.now().hour;
+    final isLunch = hour >= 11 && hour <= 14;
+    final isDinner = hour >= 17 && hour <= 20;
+    if (!isLunch && !isDinner) return const SizedBox.shrink();
+
+    final mealLabel = isLunch ? 'lunch' : 'dinner';
+    return Card(
+      elevation: 0,
+      margin: EdgeInsets.zero,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: Colors.green.withValues(alpha: .12),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(Icons.eco_outlined, color: Colors.green, size: 22),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Start your $mealLabel with salad',
+                      style: theme.textTheme.titleSmall
+                          ?.copyWith(fontWeight: FontWeight.w700)),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Eating vegetables or protein before carbs can reduce '
+                    'your post-meal spike by up to 40%. No deprivation \u2014 '
+                    'just a simple reorder.',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                        height: 1.35),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _AnalyticsTeaser extends StatelessWidget {
+  const _AnalyticsTeaser({required this.onQuickAdd});
+
+  final VoidCallback onQuickAdd;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final state = context.watch<AppState>();
+    if (state.entries.length < 3) return const SizedBox.shrink();
+
+    return Card(
+      elevation: 0,
+      margin: EdgeInsets.zero,
+      clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16)),
+      child: InkWell(
+        onTap: () => Navigator.of(context).push(MaterialPageRoute(
+            builder: (_) => const AnalyticsScreen())),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primary.withValues(alpha: .12),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(Icons.bar_chart,
+                    color: theme.colorScheme.primary),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Analytics',
+                        style: theme.textTheme.titleSmall
+                            ?.copyWith(fontWeight: FontWeight.w700)),
+                    const SizedBox(height: 3),
+                    Text(
+                      '90-day trends, daily averages, time-of-day patterns',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(Icons.chevron_right,
+                  color: theme.colorScheme.onSurfaceVariant),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _RamadanTeaser extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Card(
+      elevation: 0,
+      margin: EdgeInsets.zero,
+      clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16)),
+      child: InkWell(
+        onTap: () => Navigator.of(context).push(MaterialPageRoute(
+            builder: (_) => const RamadanScreen())),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primary.withValues(alpha: .12),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(Icons.nightlight_outlined,
+                    color: theme.colorScheme.primary),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Ramadan Mode',
+                        style: theme.textTheme.titleSmall
+                            ?.copyWith(fontWeight: FontWeight.w700)),
+                    const SizedBox(height: 3),
+                    Text(
+                      'Suhoor/iftar guidance, hypo-watch, med reminders',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(Icons.chevron_right,
+                  color: theme.colorScheme.onSurfaceVariant),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class _DueNowCard extends StatelessWidget {

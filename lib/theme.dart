@@ -14,3 +14,15 @@ ThemeData buildTheme() {
     scaffoldBackgroundColor: const Color(0xFFF4F7F6),
   );
 }
+
+ThemeData buildDarkTheme() {
+  final scheme = ColorScheme.fromSeed(
+    seedColor: kSeedColor,
+    brightness: Brightness.dark,
+  );
+  return ThemeData(
+    useMaterial3: true,
+    colorScheme: scheme,
+    scaffoldBackgroundColor: const Color(0xFF1A1C1E),
+  );
+}

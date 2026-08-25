@@ -10,6 +10,7 @@ import 'logbook/logbook_screen.dart';
 import 'safety/safety_screen.dart';
 import 'safety/protocol_screen.dart';
 import 'settings/settings_screen.dart';
+import 'widgets/voice_input_sheet.dart';
 
 class HomeShell extends StatefulWidget {
   const HomeShell({super.key});
@@ -71,6 +72,24 @@ class _HomeShellState extends State<HomeShell> {
     }
   }
 
+  Future<void> _openVoiceInput() async {
+    final result = await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (_) => const VoiceInputSheet(),
+    );
+    if (result == null || !mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        behavior: SnackBarBehavior.floating,
+        content: Text('Command processed.'),
+        duration: Duration(seconds: 2),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -83,10 +102,21 @@ class _HomeShellState extends State<HomeShell> {
           const SettingsScreen(),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _openAdd,
-        icon: const Icon(Icons.add),
-        label: const Text('Log'),
+      floatingActionButton: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          FloatingActionButton.small(
+            heroTag: 'voice',
+            onPressed: _openVoiceInput,
+            child: const Icon(Icons.mic),
+          ),
+          const SizedBox(height: 8),
+          FloatingActionButton.extended(
+            onPressed: _openAdd,
+            icon: const Icon(Icons.add),
+            label: const Text('Log'),
+          ),
+        ],
       ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _tab,

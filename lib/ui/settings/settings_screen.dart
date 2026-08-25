@@ -6,6 +6,7 @@ import '../../models/user_profile.dart';
 import '../../state/app_state.dart';
 import '../report/report_screen.dart';
 import '../food/food_database_screen.dart';
+import '../studio/studio_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -70,6 +71,8 @@ class SettingsScreen extends StatelessWidget {
           ),
           const SizedBox(height: 14),
           _buildMedsSection(context, theme),
+          const SizedBox(height: 14),
+          _buildSafetySection(context, theme, p),
           const SizedBox(height: 14),
           Card(
             elevation: 0,
@@ -188,6 +191,70 @@ class SettingsScreen extends StatelessWidget {
                         MaterialPageRoute(
                             builder: (_) => const FoodDatabaseScreen())),
                   ),
+                  const Divider(height: 1),
+                  ListTile(
+                    dense: true,
+                    contentPadding: EdgeInsets.zero,
+                    leading: const Icon(Icons.soup_kitchen_outlined),
+                    title: const Text('Meals Studio · مطبخ آمن'),
+                    subtitle: const Text('Smarter versions of your favorite dishes'),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) => const StudioScreen())),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 14),
+          Card(
+            elevation: 0,
+            margin: EdgeInsets.zero,
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SwitchListTile(
+                    dense: true,
+                    contentPadding: EdgeInsets.zero,
+                    secondary: const Icon(Icons.visibility_off_outlined),
+                    title: const Text('Focus mode'),
+                    subtitle: const Text(
+                        'Hide carb numbers in meal views. Your data is never '
+                        'deleted \u2014 only hidden while you need it.'),
+                    value: p.focusMode,
+                    onChanged: (v) => context
+                        .read<AppState>()
+                        .updateProfile(p.copyWith(focusMode: v)),
+                  ),
+                  const Divider(height: 1),
+                  SwitchListTile(
+                    dense: true,
+                    contentPadding: EdgeInsets.zero,
+                    secondary: const Icon(Icons.dark_mode_outlined),
+                    title: const Text('Dark mode'),
+                    subtitle: const Text(
+                        'Switch to a darker color scheme'),
+                    value: p.darkMode,
+                    onChanged: (v) => context
+                        .read<AppState>()
+                        .updateProfile(p.copyWith(darkMode: v)),
+                  ),
+                  const Divider(height: 1),
+                  ListTile(
+                    dense: true,
+                    contentPadding: EdgeInsets.zero,
+                    leading: const Icon(Icons.language_outlined),
+                    title: const Text('Language'),
+                    subtitle: Text(p.languageCode == 'ar' ? 'العربية' : 'English'),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () => _showLanguagePicker(context),
+                  ),
                 ],
               ),
             ),
@@ -234,6 +301,185 @@ class SettingsScreen extends StatelessWidget {
           ],
         ),
       );
+
+  Widget _buildSafetySection(
+      BuildContext context, ThemeData theme, UserProfile p) {
+    String? glucagonExpiryText;
+    final expiry = p.glucagonExpiresAt;
+    if (expiry != null) {
+      final d = DateTime.parse(expiry);
+      final days = d.difference(DateTime.now()).inDays;
+      if (days < 0) {
+        glucagonExpiryText = 'EXPIRED ${d.year}-${d.month}-${d.day} — replace it';
+      } else if (days < 60) {
+        glucagonExpiryText =
+            'expires in $days days (${d.year}-${d.month}-${d.day}) — ask for a renewal';
+      } else {
+        glucagonExpiryText = 'expires ${d.year}-${d.month}-${d.day}';
+      }
+    }
+    return Card(
+      elevation: 0,
+      margin: EdgeInsets.zero,
+      shape:
+          RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Safety extras',
+                style: theme.textTheme.titleSmall
+                    ?.copyWith(fontWeight: FontWeight.w700)),
+            const SizedBox(height: 10),
+            ListTile(
+              dense: true,
+              contentPadding: EdgeInsets.zero,
+              leading: const Icon(Icons.contact_emergency_outlined),
+              title: Text(p.emergencyContactName == null
+                  ? 'Add emergency contact'
+                  : p.emergencyContactName!),
+              subtitle: Text(p.emergencyContactPhone ?? 'Name and phone number'),
+              trailing: const Icon(Icons.edit_outlined, size: 20),
+              onTap: () => _editEmergencyContact(context),
+            ),
+            if (p.usesInsulin && p.hasGlucagonKit)
+              ListTile(
+                dense: true,
+                contentPadding: EdgeInsets.zero,
+                leading: const Icon(Icons.medication_liquid_outlined),
+                title: const Text('Glucagon kit'),
+                subtitle: Text(glucagonExpiryText ??
+                    'Tap to add the expiration date so we can remind you'),
+                trailing: const Icon(Icons.edit_outlined, size: 20),
+                onTap: () => _editGlucagonExpiry(context),
+              ),
+            SwitchListTile(
+              dense: true,
+              contentPadding: EdgeInsets.zero,
+              secondary: const Icon(Icons.badge_outlined),
+              title: const Text('I wear a medical ID'),
+              subtitle: const Text(
+                  'Bracelets or phone lock-screen notes help responders in an emergency'),
+              value: p.hasMedicalId,
+              onChanged: (v) => context.read<AppState>().updateProfile(
+                    p.copyWith(hasMedicalId: v),
+                  ),
+            ),
+            ListTile(
+              dense: true,
+              contentPadding: EdgeInsets.zero,
+              leading: const Icon(Icons.directions_car_outlined),
+              title: const Text('Before driving'),
+              subtitle: const Text(
+                  'Check your glucose first — never drive below your target low. '
+                  'Keep fast carbs in the car.'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _editEmergencyContact(BuildContext context) async {
+    final state = context.read<AppState>();
+    final nameCtrl = TextEditingController(text: state.profile.emergencyContactName ?? '');
+    final phoneCtrl = TextEditingController(text: state.profile.emergencyContactPhone ?? '');
+    final saved = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Emergency contact'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: nameCtrl,
+              decoration: const InputDecoration(labelText: 'Name'),
+              textInputAction: TextInputAction.next,
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: phoneCtrl,
+              decoration: const InputDecoration(labelText: 'Phone'),
+              keyboardType: TextInputType.phone,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Cancel')),
+          FilledButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('Save')),
+        ],
+      ),
+    );
+    if (saved != true) return;
+    await state.updateProfile(state.profile.copyWith(
+      emergencyContactName: nameCtrl.text.trim(),
+      emergencyContactPhone: phoneCtrl.text.trim(),
+    ));
+  }
+
+  Future<void> _showLanguagePicker(BuildContext context) async {
+    final state = context.read<AppState>();
+    final current = state.profile.languageCode;
+    final picked = await showDialog<String>(
+      context: context,
+      builder: (ctx) => SimpleDialog(
+        title: const Text('Language'),
+        children: [
+          SimpleDialogOption(
+            onPressed: () => Navigator.pop(ctx, 'en'),
+            child: Row(
+              children: [
+                if (current == 'en')
+                  const Icon(Icons.check, size: 20)
+                else
+                  const SizedBox(width: 20),
+                const SizedBox(width: 8),
+                const Text('English'),
+              ],
+            ),
+          ),
+          SimpleDialogOption(
+            onPressed: () => Navigator.pop(ctx, 'ar'),
+            child: Row(
+              children: [
+                if (current == 'ar')
+                  const Icon(Icons.check, size: 20)
+                else
+                  const SizedBox(width: 20),
+                const SizedBox(width: 8),
+                const Text('العربية'),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+    if (picked != null && picked != current && context.mounted) {
+      await state.updateProfile(state.profile.copyWith(languageCode: picked));
+    }
+  }
+
+  Future<void> _editGlucagonExpiry(BuildContext context) async {
+    final state = context.read<AppState>();
+    final current = state.profile.glucagonExpiresAt;
+    final initial = current != null ? DateTime.parse(current) : DateTime.now();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: initial,
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2040),
+      helpText: 'Glucagon kit expiration',
+    );
+    if (picked == null) return;
+    await state.updateProfile(state.profile.copyWith(
+      glucagonExpiresAt: picked.toIso8601String(),
+    ));
+  }
 
   Widget _buildMedsSection(BuildContext context, ThemeData theme) {
     final state = context.watch<AppState>();

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:diabetic_companion/models/food_item.dart';
 import 'package:diabetic_companion/services/food_database.dart';
+import 'package:diabetic_companion/state/app_state.dart';
 
 class FoodDatabaseScreen extends StatefulWidget {
   const FoodDatabaseScreen({super.key});
@@ -12,7 +14,6 @@ class FoodDatabaseScreen extends StatefulWidget {
 class _FoodDatabaseScreenState extends State<FoodDatabaseScreen> {
   String _query = '';
   String _selectedCategory = 'All';
-  final Set<String> _favorites = {};
 
   List<String> get _categories {
     final cats = defaultFoods.map((f) => f.category).toSet().toList();
@@ -92,7 +93,8 @@ class _FoodDatabaseScreenState extends State<FoodDatabaseScreen> {
   }
 
   Widget _foodCard(FoodItem food, ThemeData theme) {
-    final isFav = _favorites.contains(food.id);
+    final state = context.watch<AppState>();
+    final isFav = state.isFavorite(food.id);
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       child: InkWell(
@@ -143,13 +145,7 @@ class _FoodDatabaseScreenState extends State<FoodDatabaseScreen> {
                   isFav ? Icons.favorite : Icons.favorite_border,
                   color: isFav ? theme.colorScheme.error : null,
                 ),
-                onPressed: () => setState(() {
-                  if (isFav) {
-                    _favorites.remove(food.id);
-                  } else {
-                    _favorites.add(food.id);
-                  }
-                }),
+                onPressed: () => context.read<AppState>().toggleFavorite(food.id),
               ),
             ],
           ),

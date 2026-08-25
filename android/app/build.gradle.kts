@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.diabetic_companion"
+    namespace = "com.nadahassab.diabetic_companion"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -15,8 +15,7 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.example.diabetic_companion"
+        applicationId = "com.nadahassab.diabetic_companion"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
@@ -31,8 +30,7 @@ android {
 
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
+            // Configure signing for production releases
             signingConfig = signingConfigs.getByName("debug")
         }
     }

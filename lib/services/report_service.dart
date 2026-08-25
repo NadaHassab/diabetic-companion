@@ -16,6 +16,7 @@ class ReportData {
   final double tarPercent;
   final int hypoEvents;
   final int hyperEvents;
+  final int severeHypoEvents;
   final int fastingCount;
   final double? fastingMean;
   final int daysLogged;
@@ -38,6 +39,7 @@ class ReportData {
     required this.tarPercent,
     required this.hypoEvents,
     required this.hyperEvents,
+    required this.severeHypoEvents,
     required this.fastingCount,
     this.fastingMean,
     required this.daysLogged,
@@ -76,6 +78,7 @@ class ReportService {
         tarPercent: 0,
         hypoEvents: 0,
         hyperEvents: 0,
+        severeHypoEvents: 0,
         fastingCount: 0,
         daysLogged: 0,
         totalDays: periodDays,
@@ -99,6 +102,8 @@ class ReportService {
 
     final hypoEvents =
         window.where((e) => e.mgdl < 70).length;
+    final severeHypoEvents =
+        window.where((e) => e.mgdl < 54).length;
     final hyperEvents =
         window.where((e) => e.mgdl > 250).length;
 
@@ -148,6 +153,7 @@ class ReportService {
       tarPercent: (above / window.length) * 100,
       hypoEvents: hypoEvents,
       hyperEvents: hyperEvents,
+      severeHypoEvents: severeHypoEvents,
       fastingCount: fastingEntries.length,
       fastingMean: fastingMean,
       daysLogged: days.length,
@@ -197,7 +203,7 @@ class ReportService {
 
     buf.writeln('CLINICAL EVENTS');
     buf.writeln('  Hypo (<70): ${r.hypoEvents} events');
-    buf.writeln('  Severe hypo (<54): ${_countSevere(r, 54)} events');
+    buf.writeln('  Severe hypo (<54): ${r.severeHypoEvents} events');
     buf.writeln('  Hyper (>250): ${r.hyperEvents} events');
     buf.writeln();
 
@@ -238,10 +244,6 @@ class ReportService {
         'This report is informational. Share with your care team.');
 
     return buf.toString();
-  }
-
-  static int _countSevere(ReportData r, double threshold) {
-    return 0;
   }
 
   static String _fmtDate(DateTime d) =>

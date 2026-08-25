@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../constants.dart';
+import '../../models/glucose_entry.dart';
+import '../../services/escalation_service.dart';
 import '../../services/trend_service.dart';
 import '../../state/app_state.dart';
 import '../../theme.dart';
@@ -127,6 +129,8 @@ class WeeklyReviewScreen extends StatelessWidget {
                 ),
               ),
           ],
+          const SizedBox(height: 12),
+          _WellbeingCard(entries: state.entries),
           const SizedBox(height: 6),
           Container(
             width: double.infinity,
@@ -206,6 +210,76 @@ class _FastingCell extends StatelessWidget {
             style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant)),
       ],
+    );
+  }
+}
+
+class _WellbeingCard extends StatelessWidget {
+  const _WellbeingCard({required this.entries});
+
+  final List<GlucoseEntry> entries;
+
+  @override
+  Widget build(BuildContext context) {
+    final signals = EscalationService.assess(entries: entries);
+    if (signals.isEmpty) return const SizedBox.shrink();
+    final theme = Theme.of(context);
+    final rung = EscalationService.overallRung(signals);
+    final isCritical = rung == EscalationRung.safetyCritical;
+    final accent = isCritical ? kUrgentColor : kInfoColor;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: accent.withValues(alpha: .10),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: accent.withValues(alpha: .35)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.self_improvement_outlined, color: accent),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'A gentle check-in',
+                  style: theme.textTheme.titleSmall
+                      ?.copyWith(fontWeight: FontWeight.w700),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Diabetes asks a lot of you. Some patterns below are common and '
+            'say nothing about your effort or worth.',
+            style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant, height: 1.35),
+          ),
+          for (final s in signals) ...[
+            const SizedBox(height: 12),
+            Text(s.title,
+                style: theme.textTheme.titleSmall
+                    ?.copyWith(fontWeight: FontWeight.w700)),
+            const SizedBox(height: 4),
+            Text(s.body,
+                style:
+                    theme.textTheme.bodyMedium?.copyWith(height: 1.35)),
+            if (s.conversationStarter != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 6),
+                child: Text('Talking point: ${s.conversationStarter}',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                        fontStyle: FontStyle.italic,
+                        color: theme.colorScheme.onSurfaceVariant,
+                        height: 1.3)),
+              ),
+          ],
+        ],
+      ),
     );
   }
 }

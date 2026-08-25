@@ -5,6 +5,7 @@ import '../../models/context_tag.dart';
 import '../../models/glucose_entry.dart';
 import '../../services/safety_service.dart';
 import '../../state/app_state.dart';
+import 'meal_picker_sheet.dart';
 
 class AddReadingSheet extends StatefulWidget {
   const AddReadingSheet({super.key});
@@ -80,21 +81,34 @@ class _AddReadingSheetState extends State<AddReadingSheet> {
 
     if (!mounted) return;
     final state = context.read<AppState>();
-    await state.addReading(
+    final saved = await state.addReading(
       mgdl: v,
       tags: Set<ContextTag>.of(_tags),
       note: _noteCtrl.text.trim(),
       confirmedUnusual: SafetyService.isUnusualValue(v),
     );
     if (!mounted) return;
+
+    final mealRelated = _tags.contains(ContextTag.beforeMeal) ||
+        _tags.contains(ContextTag.afterMeal);
+    var mealSaved = false;
+    if (mealRelated) {
+      mealSaved = await MealPickerSheet.show(context, saved.id);
+      if (!mounted) return;
+    }
+
     Navigator.of(context).pop(GlucoseEntry(
-      id: 'returned',
-      recordedAt: DateTime.now(),
+      id: saved.id,
+      recordedAt: saved.recordedAt,
       mgdl: v,
       tags: Set<ContextTag>.of(_tags),
       note: _noteCtrl.text.trim(),
       confirmedUnusual: SafetyService.isUnusualValue(v),
     ));
+    if (mealSaved && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Meal saved with your reading')));
+    }
   }
 
   String _formatVal(double v) =>

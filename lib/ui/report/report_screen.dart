@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:diabetic_companion/services/report_service.dart';
+import 'package:diabetic_companion/services/pdf_report_service.dart';
 import 'package:diabetic_companion/state/app_state.dart';
 
 class ReportScreen extends StatelessWidget {
@@ -21,6 +22,11 @@ class ReportScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Doctor-Ready Report'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.picture_as_pdf_outlined),
+            tooltip: 'Export as PDF',
+            onPressed: () => _exportPdf(context, report),
+          ),
           IconButton(
             icon: const Icon(Icons.copy_rounded),
             tooltip: 'Copy to clipboard',
@@ -45,6 +51,7 @@ class ReportScreen extends StatelessWidget {
           const SizedBox(height: 16),
           _sectionTitle(theme, 'Clinical Events'),
           _metricRow(theme, 'Hypoglycemia (<70)', '${report.hypoEvents} events'),
+          _metricRow(theme, 'Severe hypoglycemia (<54)', '${report.severeHypoEvents} events'),
           _metricRow(theme, 'Hyperglycemia (>250)', '${report.hyperEvents} events'),
           if (report.fastingCount > 0) ...[
             const SizedBox(height: 8),
@@ -213,6 +220,26 @@ class ReportScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Future<void> _exportPdf(BuildContext context, ReportData report) async {
+    final state = context.read<AppState>();
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Generating PDF...')),
+    );
+    try {
+      await PdfReportService.generateAndShare(
+        report: report,
+        entries: state.entries,
+        targets: state.targets,
+      );
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('PDF generation failed: $e')),
+        );
+      }
+    }
   }
 
   void _showReportText(BuildContext context, String text) {
