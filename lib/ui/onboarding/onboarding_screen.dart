@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../constants.dart';
+import '../../l10n/app_localizations.dart';
 import '../../models/targets.dart';
 import '../../models/user_profile.dart';
 import '../../state/app_state.dart';
@@ -27,6 +27,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     _pageController.dispose();
     super.dispose();
   }
+
+  String _tr(BuildContext context, String key) =>
+      AppLocalizations.of(context).translate(key);
 
   bool get _canAdvance {
     switch (_page) {
@@ -81,9 +84,37 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     final targets = GlycemicTargets.forProfile(_draft);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Welcome',
-            style: TextStyle(fontWeight: FontWeight.w600)),
+        title: Text(_tr(context, 'appTitle'),
+            style: const TextStyle(fontWeight: FontWeight.w600)),
         centerTitle: false,
+        actions: [
+          // Language toggle always visible in app bar
+          Padding(
+            padding: const EdgeInsets.only(left: 8),
+            child: SegmentedButton<String>(
+              segments: const [
+                ButtonSegment(value: 'en', label: Text('EN')),
+                ButtonSegment(value: 'ar', label: Text('عربي')),
+              ],
+              selected: {_draft.languageCode},
+              onSelectionChanged: (v) {
+                final lang = v.first;
+                setState(() => _draft = _draft.copyWith(languageCode: lang));
+                // Persist immediately so the whole widget tree rebuilds with new locale
+                context.read<AppState>().updateProfile(
+                      _draft.copyWith(
+                        onboarded: false,
+                        acceptedDisclaimer: _disclaimerAccepted,
+                      ),
+                    );
+              },
+              style: ButtonStyle(
+                visualDensity: VisualDensity.compact,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+            ),
+          ),
+        ],
       ),
       body: Column(
         children: [
@@ -130,12 +161,15 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             child: Row(
               children: [
                 if (_page > 0)
-                  TextButton(onPressed: _back, child: const Text('Back')),
+                  TextButton(
+                      onPressed: _back,
+                      child: Text(_tr(context, 'cancel'))),
                 const Spacer(),
                 FilledButton(
                   onPressed: _canAdvance ? _next : null,
-                  child:
-                      Text(_page == _totalPages - 1 ? 'Get started' : 'Next'),
+                  child: Text(_page == _totalPages - 1
+                      ? _tr(context, 'onbGetStarted')
+                      : _tr(context, 'save')),
                 ),
               ],
             ),
@@ -176,10 +210,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     final theme = Theme.of(context);
     return _stepScaffold(
       context,
-      title: 'Your companion, not your judge',
-      body:
-          'A calm place to log blood sugar and understand patterns. '
-          '$kCompassionLine',
+      title: _tr(context, 'onbWelcome'),
+      body: _tr(context, 'onbWelcomeBody'),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -196,13 +228,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       Icon(Icons.info_outline,
                           size: 18, color: theme.colorScheme.primary),
                       const SizedBox(width: 8),
-                      Text('Important',
+                      Text(_tr(context, 'onbImportant'),
                           style: theme.textTheme.titleSmall
                               ?.copyWith(fontWeight: FontWeight.w600)),
                     ],
                   ),
                   const SizedBox(height: 8),
-                  Text(kMedicalDisclaimer,
+                  Text(_tr(context, 'onbDisclaimer'),
                       style: theme.textTheme.bodySmall?.copyWith(height: 1.4)),
                 ],
               ),
@@ -214,8 +246,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             onChanged: (v) => setState(() => _disclaimerAccepted = v ?? false),
             controlAffinity: ListTileControlAffinity.leading,
             contentPadding: EdgeInsets.zero,
-            title: const Text(
-                'I understand this app does not replace medical advice.'),
+            title: Text(_tr(context, 'onbDisclaimerCheck')),
           ),
         ],
       ),
@@ -224,9 +255,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   Widget _buildTypeStep(BuildContext context) => _stepScaffold(
         context,
-        title: 'What type of diabetes?',
-        body: 'This personalizes your targets and safety content. You can '
-            'change it anytime in Settings.',
+        title: _tr(context, 'onbDiabetesType'),
+        body: _tr(context, 'onbDiabetesTypeBody'),
         child: RadioGroup<DiabetesType>(
           groupValue: _draft.diabetesType,
           onChanged: (v) {
@@ -271,9 +301,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   Widget _buildInsulinStep(BuildContext context) => _stepScaffold(
         context,
-        title: 'Your medication',
-        body: 'Used only to tailor safety guidance. The app never calculates '
-            'or suggests doses.',
+        title: _tr(context, 'onbMedication'),
+        body: _tr(context, 'onbMedicationBody'),
         child: Column(
           children: [
             SwitchListTile(
@@ -282,7 +311,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 _draft = _draft.copyWith(usesInsulin: v);
                 if (!v) _draft = _draft.copyWith(hasGlucagonKit: false);
               }),
-              title: const Text('I take insulin'),
+              title: Text(_tr(context, 'insulinTaking')),
               subtitle: const Text('Includes pens or pumps'),
             ),
             if (_draft.usesInsulin)
@@ -290,7 +319,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 value: _draft.hasGlucagonKit,
                 onChanged: (v) =>
                     setState(() => _draft = _draft.copyWith(hasGlucagonKit: v)),
-                title: const Text('I have a glucagon kit at home'),
+                title: Text(_tr(context, 'glucagonAtHome')),
                 subtitle: const Text('Nasal or injection, in date'),
               ),
             if (_draft.usesInsulin && !_draft.hasGlucagonKit)
@@ -310,17 +339,17 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     final theme = Theme.of(context);
     return _stepScaffold(
       context,
-      title: 'A bit about you',
-      body: 'Age and special situations adjust your personal glucose goals.',
+      title: _tr(context, 'onbAboutYou'),
+      body: _tr(context, 'onbAboutYouBody'),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           TextFormField(
             initialValue: _draft.ageYears.toString(),
             keyboardType: TextInputType.number,
-            decoration: const InputDecoration(
-              labelText: 'Age',
-              border: OutlineInputBorder(),
+            decoration: InputDecoration(
+              labelText: _tr(context, 'onbAge'),
+              border: const OutlineInputBorder(),
             ),
             onChanged: (v) {
               final age = int.tryParse(v);
@@ -337,19 +366,20 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             onChanged: _draft.diabetesType == DiabetesType.gestational
                 ? null
                 : (v) => setState(() => _draft = _draft.copyWith(pregnant: v)),
-            title: const Text('Pregnant'),
-            subtitle: const Text(
+            title: Text(_tr(context, 'pregnancy')),
+            subtitle: Text(
                 'Applies pregnancy glucose targets automatically with '
-                'gestational diabetes'),
+                'gestational diabetes',
+                style: theme.textTheme.bodySmall),
           ),
           SwitchListTile(
             value: _draft.olderAdultComplexHealth,
             onChanged: (v) => setState(
                 () => _draft = _draft.copyWith(olderAdultComplexHealth: v)),
-            title: const Text('Use relaxed older-adult goals'),
-            subtitle: const Text(
+            title: Text(_tr(context, 'olderAdult')),
+            subtitle: Text(
                 'For 65+ with complex health, where avoiding lows matters most',
-                style: TextStyle(fontSize: 12.5)),
+                style: theme.textTheme.bodySmall),
           ),
           const SizedBox(height: 8),
           Text(
@@ -367,8 +397,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     final theme = Theme.of(context);
     return _stepScaffold(
       context,
-      title: 'Your personal targets',
-      body: 'Based on ADA Standards of Care 2026 for: ${targets.stratumLabel}.',
+      title: _tr(context, 'onbYourTargets'),
+      body: '${_tr(context, 'onbTargetsBody')}\n'
+          'ADA 2026: ${targets.stratumLabel}.',
       child: Column(
         children: [
           Card(
@@ -385,7 +416,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         ?.copyWith(fontWeight: FontWeight.w700),
                   ),
                   const SizedBox(height: 4),
-                  Text('your target range',
+                  Text(_tr(context, 'onbTimeInRange'),
                       style: theme.textTheme.bodySmall?.copyWith(
                           color: theme.colorScheme.onSurfaceVariant)),
                   const Divider(height: 24),
@@ -418,28 +449,19 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   Widget _buildQuizStep(BuildContext context) {
     final theme = Theme.of(context);
-    const options = [
-      'Wait until the next meal and recheck later.',
-      'Take 15 g of fast sugar now \u2014 juice or 4 glucose tablets '
-          '\u2014 then recheck in 15 minutes.',
-      'Take an extra dose of insulin to bring it down.',
+    final options = [
+      _tr(context, 'onbQuizOpt1'),
+      _tr(context, 'onbQuizOpt2'),
+      _tr(context, 'onbQuizOpt3'),
     ];
     final chosenCorrect = _quizChoice == _kQuizCorrectIndex;
     final answeredWrong =
         _quizChoice >= 0 && _quizChoice != _kQuizCorrectIndex;
 
-    String wrongHint(int idx) {
-      if (idx == 0) {
-        return 'Waiting lets a low go lower. Fast sugar works within minutes.';
-      }
-      return 'Insulin would push it lower \u2014 that is dangerous during a low.';
-    }
-
     return _stepScaffold(
       context,
-      title: 'One quick safety check',
-      body:
-          'You read 55 mg/dL and feel shaky and sweaty. What do you do first?',
+      title: _tr(context, 'onbSafetyQuiz'),
+      body: _tr(context, 'onbQuizQuestion'),
       child: RadioGroup<int>(
         groupValue: _quizChoice,
         onChanged: (v) => setState(() => _quizChoice = v ?? -1),
@@ -477,10 +499,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       theme.colorScheme.primaryContainer.withValues(alpha: .5),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Text(
-                  'That\u2019s right. This 15-15 habit is the core of staying '
-                  'safe \u2014 the app will show it whenever a reading goes low.',
-                ),
+                child: Text(_tr(context, 'onbQuizCorrect')),
               ),
             if (answeredWrong)
               Container(
@@ -491,7 +510,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       theme.colorScheme.errorContainer.withValues(alpha: .35),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Text(wrongHint(_quizChoice)),
+                child: Text(_tr(context, 'onbQuizWrong')),
               ),
           ],
         ),
