@@ -87,5 +87,39 @@ class NotificationsService {
         );
       }
     }
+
+    // Vegetable-first nudge at lunch (11:30) and dinner (17:30)
+    await _scheduleVeggieNudge(id: notifId++, hour: 11, minute: 30);
+    await _scheduleVeggieNudge(id: notifId++, hour: 17, minute: 30);
+  }
+
+  static Future<void> _scheduleVeggieNudge({
+    required int id,
+    required int hour,
+    required int minute,
+  }) async {
+    if (kIsWeb) return;
+    await _plugin.periodicallyShow(
+      id,
+      'Meal tip',
+      'Start your meal with salad or vegetables before carbs — it can reduce your spike by up to 40%.',
+      RepeatInterval.daily,
+      const NotificationDetails(
+        android: AndroidNotificationDetails(
+          'meal_tips',
+          'Meal Tips',
+          channelDescription: 'Gentle meal-timing nudges',
+          importance: Importance.defaultImportance,
+          priority: Priority.defaultPriority,
+          icon: '@mipmap/ic_launcher',
+        ),
+        iOS: DarwinNotificationDetails(
+          presentAlert: true,
+          presentBadge: false,
+          presentSound: true,
+        ),
+      ),
+      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+    );
   }
 }

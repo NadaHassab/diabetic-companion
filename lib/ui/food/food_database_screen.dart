@@ -95,6 +95,7 @@ class _FoodDatabaseScreenState extends State<FoodDatabaseScreen> {
   Widget _foodCard(FoodItem food, ThemeData theme) {
     final state = context.watch<AppState>();
     final isFav = state.isFavorite(food.id);
+    final focusMode = state.profile.focusMode;
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       child: InkWell(
@@ -132,12 +133,18 @@ class _FoodDatabaseScreenState extends State<FoodDatabaseScreen> {
                   ],
                 ),
               ),
-              if (food.portions.isNotEmpty)
+              if (!focusMode && food.portions.isNotEmpty)
                 Text(
                   '${food.portions.first.carbGrams.toStringAsFixed(0)}g carbs',
                   style: theme.textTheme.bodySmall?.copyWith(
                       color: theme.colorScheme.primary,
                       fontWeight: FontWeight.w600),
+                ),
+              if (focusMode && food.portions.isNotEmpty)
+                Text(
+                  food.portions.first.label,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant),
                 ),
               const SizedBox(width: 8),
               IconButton(
@@ -155,6 +162,7 @@ class _FoodDatabaseScreenState extends State<FoodDatabaseScreen> {
   }
 
   void _showFoodDetail(FoodItem food) {
+    final focusMode = context.read<AppState>().profile.focusMode;
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -214,10 +222,11 @@ class _FoodDatabaseScreenState extends State<FoodDatabaseScreen> {
                                 ?.copyWith(fontWeight: FontWeight.w700)),
                       ),
                       Expanded(child: Text('${p.grams.toStringAsFixed(0)}g')),
-                      Text('${p.carbGrams.toStringAsFixed(0)}g carbs',
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: Theme.of(context).colorScheme.primary,
-                              fontWeight: FontWeight.w600)),
+                      if (!focusMode)
+                        Text('${p.carbGrams.toStringAsFixed(0)}g carbs',
+                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                color: Theme.of(context).colorScheme.primary,
+                                fontWeight: FontWeight.w600)),
                     ],
                   ),
                 )),

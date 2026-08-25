@@ -35,8 +35,8 @@ class _HomeShellState extends State<HomeShell> {
       label: 'Logbook',
     ),
     NavigationDestination(
-      icon: Icon(Icons.restaurant_outlined),
-      selectedIcon: Icon(Icons.restaurant),
+      icon: Icon(Icons.restaurant_outlined, size: 24),
+      selectedIcon: Icon(Icons.restaurant, size: 28),
       label: 'Kitchen',
     ),
     NavigationDestination(
