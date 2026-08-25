@@ -5,7 +5,7 @@ import 'package:provider/provider.dart';
 import '../../models/context_tag.dart';
 import '../../state/app_state.dart';
 import '../../services/voice_service.dart';
-import '../../services/voice_advisor.dart';
+import '../../services/smart_advisor.dart';
 
 class VoiceInputSheet extends StatefulWidget {
   const VoiceInputSheet({super.key});
@@ -18,7 +18,7 @@ class _VoiceInputSheetState extends State<VoiceInputSheet>
     with SingleTickerProviderStateMixin {
   final _controller = TextEditingController();
   ParsedCommand? _parsed;
-  AdvisorContext? _advisorResponse;
+  AdvisorResponse? _advisorResponse;
   bool _confirmed = false;
   bool _processing = false;
   VoiceState _voiceState = VoiceState.idle;
@@ -76,13 +76,14 @@ class _VoiceInputSheetState extends State<VoiceInputSheet>
         _confirmed = false;
       });
     } else {
-      // Use the AI advisor for everything else
+      // Use the Smart Advisor for everything else
       final state = context.read<AppState>();
-      final advisorCtx = VoiceAdvisor.advise(
+      final advisorCtx = SmartAdvisor.advise(
         userMessage: text,
         recentEntries: state.entries,
         targets: state.targets,
       );
+      SmartAdvisor.memory.add(text, advisorCtx);
       setState(() {
         _parsed = null;
         _advisorResponse = advisorCtx;
@@ -163,7 +164,7 @@ class _VoiceInputSheetState extends State<VoiceInputSheet>
 
   Future<void> _speakAdvisorResponse() async {
     if (_advisorResponse == null) return;
-    await VoiceService.speak(_advisorResponse!.response);
+    await VoiceService.speak(_advisorResponse!.text);
   }
 
   @override
@@ -391,9 +392,9 @@ class _VoiceInputSheetState extends State<VoiceInputSheet>
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          advisor.foodMentioned.isNotEmpty
-                              ? 'About ${advisor.foodMentioned}'
-                              : 'Advisor',
+                          advisor.foodName != null
+                              ? 'About ${advisor.foodName}'
+                              : 'Nutrition Advisor',
                           style: theme.textTheme.titleSmall
                               ?.copyWith(fontWeight: FontWeight.w700),
                         ),
@@ -407,10 +408,10 @@ class _VoiceInputSheetState extends State<VoiceInputSheet>
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    advisor.response,
+                    advisor.text,
                     style: theme.textTheme.bodyMedium?.copyWith(height: 1.4),
                   ),
-                  if (advisor.suggestion != null) ...[
+                  if (advisor.swapSuggestion != null) ...[
                     const SizedBox(height: 10),
                     Container(
                       padding: const EdgeInsets.all(10),
@@ -426,7 +427,7 @@ class _VoiceInputSheetState extends State<VoiceInputSheet>
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
-                              advisor.suggestion!,
+                              advisor.swapSuggestion!,
                               style: theme.textTheme.bodySmall
                                   ?.copyWith(height: 1.35),
                             ),
@@ -435,13 +436,27 @@ class _VoiceInputSheetState extends State<VoiceInputSheet>
                       ),
                     ),
                   ],
-                  if (advisor.showKitchenSwap) ...[
-                    const SizedBox(height: 8),
-                    Text(
-                      'Check the Kitchen tab for smart dish alternatives.',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.primary,
-                        fontStyle: FontStyle.italic,
+                  if (advisor.followUp != null) ...[
+                    const SizedBox(height: 10),
+                    GestureDetector(
+                      onTap: () {
+                        _controller.text = advisor.followUp!;
+                        _onTextChanged(advisor.followUp!);
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.primary.withValues(alpha: .1),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          advisor.followUp!,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.primary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                       ),
                     ),
                   ],
