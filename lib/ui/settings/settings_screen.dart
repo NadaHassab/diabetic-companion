@@ -197,7 +197,7 @@ class SettingsScreen extends StatelessWidget {
                     contentPadding: EdgeInsets.zero,
                     leading: const Icon(Icons.soup_kitchen_outlined),
                     title: const Text('Meals Studio · مطبخ آمن'),
-                    subtitle: const Text('Smarter versions of your favorite dishes'),
+                    subtitle: const Text('Now also in the Kitchen tab'),
                     trailing: const Icon(Icons.chevron_right),
                     onTap: () => Navigator.push(
                         context,

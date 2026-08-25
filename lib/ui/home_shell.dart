@@ -10,6 +10,7 @@ import 'logbook/logbook_screen.dart';
 import 'safety/safety_screen.dart';
 import 'safety/protocol_screen.dart';
 import 'settings/settings_screen.dart';
+import 'studio/studio_screen.dart';
 import 'widgets/voice_input_sheet.dart';
 
 class HomeShell extends StatefulWidget {
@@ -32,6 +33,11 @@ class _HomeShellState extends State<HomeShell> {
       icon: Icon(Icons.format_list_bulleted_outlined),
       selectedIcon: Icon(Icons.format_list_bulleted),
       label: 'Logbook',
+    ),
+    NavigationDestination(
+      icon: Icon(Icons.restaurant_outlined),
+      selectedIcon: Icon(Icons.restaurant),
+      label: 'Kitchen',
     ),
     NavigationDestination(
       icon: Icon(Icons.health_and_safety_outlined),
@@ -98,6 +104,7 @@ class _HomeShellState extends State<HomeShell> {
         children: [
           DashboardScreen(onQuickAdd: _openAdd),
           const LogbookScreen(),
+          const StudioScreen(),
           const SafetyScreen(),
           const SettingsScreen(),
         ],
